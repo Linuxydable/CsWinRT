@@ -150,7 +150,7 @@ $(CsWinRTFilters)
   </Target>
 
     <!-- When an authored component makes a nupkg, add the necessary hosting assets to the package -->
-  <Target Name="CsWinRTProjectReferenceHelper" BeforeTargets="GetCopyToOutputDirectoryItems" Outputs="@(Content)">
+  <Target Name="CsWinRTProjectReferenceHelper" Condition="'$(CsWinRTComponent)' == 'true'" BeforeTargets="GetCopyToOutputDirectoryItems" Outputs="@(Content)">
    
     <ItemGroup>
      <!-- The authored component gets the WinRT.Runtime and NET.SDK dlls from ReferenceCopyLocalPaths 
