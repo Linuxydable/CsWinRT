@@ -19,6 +19,8 @@ Copyright (C) Microsoft Corporation. All rights reserved.
     <TrackFileAccess Condition="'$(CsWinRTComponent)' != 'true'">false</TrackFileAccess> 
     <!-- Make sure WinRT.Runtime.dll and Microsoft.Windows.SDK.NET.dll get binplaced with authored component's dll -->
     <CopyLocalLockFileAssemblies Condition="'$(CsWinRTComponent)' == 'true'">true</CopyLocalLockFileAssemblies>
+    <!-- For project references, make sure we copy neccessary dlls  --> 
+    <AssignTargetPathsDependsOn>CsWinRTProjectReferenceHelper;$(AssignTargetPathsDependsOn)</AssignTargetPathsDependsOn>
   </PropertyGroup>
 
   <!-- Remove WinRT.Host.dll and WinRT.Host.Shim.dll references -->
@@ -142,6 +144,38 @@ $(CsWinRTFilters)
   <!-- Copy Authored winmd to output folder -->
   <Target Name="CsWinRTPlaceWinMDInOutputFolder" Condition="'$(CsWinRTComponent)' == 'true'" BeforeTargets="AfterBuild">
     <Copy SourceFiles="$(GeneratedFilesDir)\$(AssemblyName).winmd" DestinationFolder="$(TargetDir)" UseHardlinksIfPossible="false" SkipUnchangedFiles="true" />
+    <ItemGroup>
+      <TargetPathWithTargetPlatformMoniker Include="$(TargetDir)$(AssemblyName).winmd" />
+    </ItemGroup>
+  </Target>
+
+    <!-- When an authored component makes a nupkg, add the necessary hosting assets to the package -->
+  <Target Name="CsWinRTProjectReferenceHelper" BeforeTargets="GetCopyToOutputDirectoryItems" Outputs="@(Content)">
+   
+    <ItemGroup>
+     <!-- The authored component gets the WinRT.Runtime and NET.SDK dlls from ReferenceCopyLocalPaths 
+            (because CopyLocalLockFileAssemblies == true) -->
+      <Content Include="$(CsWinRTPath)lib\net5.0\WinRT.Host.Shim.dll;@(ReferenceCopyLocalPaths)" 
+               CopyToOutputDirectory="PreserveNewest"  />
+
+      <!-- WinRT.Host.dll is architecture specific -->
+      <!-- x64 --> 
+      <Content Condition="Exists('$(CsWinRTPath)runtimes\win-x64\native\WinRT.Host.dll') AND '$(Platform)' == 'x64'" 
+               Include="$(CsWinRTPath)runtimes\win-x64\native\WinRT.Host.dll"
+               CopyToOutputDirectory="PreserveNewest" />
+      <!-- x86 --> 
+      <Content Condition="Exists('$(CsWinRTPath)runtimes\win-x86\native\WinRT.Host.dll') AND '$(Platform)' == 'x86'" 
+               Include="$(CsWinRTPath)runtimes\win-x86\native\WinRT.Host.dll"
+               CopyToOutputDirectory="PreserveNewest" />
+      <!-- arm --> 
+      <Content Condition="Exists('$(CsWinRTPath)runtimes\win-arm\native\WinRT.Host.dll') AND '$(Platform)' == 'arm'" 
+               Include="$(CsWinRTPath)runtimes\win-arm\native\WinRT.Host.dll"
+               CopyToOutputDirectory="PreserveNewest" />
+      <!-- arm64 --> 
+      <Content Condition="Exists('$(CsWinRTPath)runtimes\win-arm64\native\WinRT.Host.dll') AND '$(Platform)' == 'arm64'" 
+               Include="$(CsWinRTPath)runtimes\win-arm64\native\WinRT.Host.dll"
+               CopyToOutputDirectory="PreserveNewest" />
+   </ItemGroup>
   </Target>
 
   <!-- When an authored component makes a nupkg, add the necessary hosting assets to the package -->
